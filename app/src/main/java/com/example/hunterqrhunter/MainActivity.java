@@ -26,6 +26,10 @@ public class MainActivity extends AppCompatActivity {
 
         Object hash = hashQR.hashObject(hashVal);
 
+//      All stuffs related to firebase creation,
+//      firebase data create/update/delete/pull need to be inside FbRepository
+//      In MainActivity just initialize the firebase.
+
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         // Create a new user with a first and last name

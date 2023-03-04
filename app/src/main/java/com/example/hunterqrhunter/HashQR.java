@@ -1,5 +1,5 @@
 package com.example.hunterqrhunter;
-
+// This needs to be inside model folder since it is a QR model
 public class HashQR {
     public static int hashObject(Object obj) {
         if (obj == null) {
