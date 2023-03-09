@@ -7,6 +7,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.os.Bundle;
 import android.util.Log;
+import android.widget.TextView;
 
 import com.example.hunterqrhunter.model.User;
 import com.example.hunterqrhunter.data.FbRepository;
@@ -19,7 +20,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
-    Object hashVal = "rickywang1123@gmail.com";
+
+
+
+    Object hashVal = "yiqiu@gmail.com";
     HashQR hashQR = new HashQR();
     FirebaseFirestore db = FirebaseFirestore.getInstance();
     FbRepository fb = new FbRepository(db);
@@ -35,9 +39,11 @@ public class MainActivity extends AppCompatActivity {
 //      In MainActivity just initialize the firebase.
 
         // Create a new user with a first and last name
-        User user = new User("5","Ricky","Wang",1997,hash);
+        User user = new User("1","Patrick","Wang",2000, hash);
 
         // Add a new document with a generated ID
-        fb.createUser(user);
+//        fb.createUser(user);
+        User userGet = new User("1");
+        fb.getUser(userGet);
     }
 }

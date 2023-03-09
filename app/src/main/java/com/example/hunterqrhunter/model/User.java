@@ -13,6 +13,8 @@ public class User {
     String lastName;
     int born;
     int hash;
+    //    Array<HashQR> qrArray;
+
 
     public User(String uid,String fn, String ln, int born, int hash) {
         this.uid = uid;
@@ -22,8 +24,10 @@ public class User {
         this.hash = hash;
     }
 
+    public User(String uid) {
+        this.uid = uid;
+    }
 
-//    Array<HashQR> qrArray;
 
     public String getFirstName() {
         return this.firstName;
@@ -35,8 +39,41 @@ public class User {
         result.put("uid", this.uid);
         result.put("firstName", this.firstName);
         result.put("lastName", this.lastName);
-        result.put("born", born);
-        result.put("hash", hash);
+        result.put("born", this.born);
+        result.put("hash", this.hash);
 
         return result;
-    }}
+    }
+
+    public String getUid() {
+        return uid;
+    }
+
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
+
+    public int getBorn() {
+        return born;
+    }
+
+    public void setBorn(int born) {
+        this.born = born;
+    }
+
+    public int getHash() {
+        return hash;
+    }
+
+    public void setHash(int hash) {
+        this.hash = hash;
+    }
+}
