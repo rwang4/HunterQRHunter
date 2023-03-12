@@ -2,48 +2,74 @@ package com.example.hunterqrhunter;
 
 import static android.content.ContentValues.TAG;
 
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.TextView;
+import android.view.View;
+import android.widget.Button;
 
-import com.example.hunterqrhunter.model.User;
 import com.example.hunterqrhunter.data.FbRepository;
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
+import com.example.hunterqrhunter.model.QRCreature;
+import com.example.hunterqrhunter.model.User;
 import com.google.firebase.firestore.DocumentReference;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
-
-
-
-    Object hashVal = "yiqiu@gmail.com";
+    Object hashVal = "yongbin@gmail.com";
     HashQR hashQR = new HashQR();
-    FirebaseFirestore db = FirebaseFirestore.getInstance();
-    FbRepository fb = new FbRepository(db);
+
+    private Button mButton;
+    FirebaseFirestore db;
+    FbRepository fb;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        db = FirebaseFirestore.getInstance();
+        fb = new FbRepository(db);
+        ArrayList<String> list = new ArrayList<>(Arrays.asList("a","b","c"));
+        ArrayList<String> list2 = new ArrayList<>(Arrays.asList("c","b","a"));
 
-        int hash = HashQR.hashObject(hashVal);
+        QRCreature qr = new QRCreature("5", "Lingfeng", 300, 2001, list,list2);
+        list.add("abc");
+        qr.setComments(list);
 
-//      All stuffs related to firebase creation,
-//      firebase data create/update/delete/pull need to be inside FbRepository
-//      In MainActivity just initialize the firebase.
+//        QRCreature qr2 = new QRCreature("7", "Lingfeng", 300, 1000, list,list2);
+        getQR(300);
+        fb.writeQR(qr);
+    }
+    public void getQR(int qrCode){
+        DocumentReference docRef = db.collection("QR Creatures").document(Integer.toString(qrCode));
+        docRef.get().addOnCompleteListener(task -> {
+            if (task.isSuccessful()) {
+                DocumentSnapshot document = task.getResult();
+                if (document.exists()) {
+                    QRCreature qr = new QRCreature(qrCode);
+                    // set QR object
+                    qr.setHashName((String) document.get("QR Name"));
+                    qr.setHashImage((String) document.get("QR Image"));
+                    qr.setScore(((Long) Objects.requireNonNull(document.get("QR Score"))).intValue());
+                    qr.setOwnedBy((ArrayList<String>) document.get("QR Ownedby"));
+                    qr.setComments((ArrayList<String>) document.get("QR comments"));
+                    System.out.println(qr.toMap());
+                    // here you can use the callback function to do the work with the get QR.
+                    Log.d(TAG, "DocumentSnapshot data: " + document.getData());
 
-        // Create a new user with a first and last name
-        User user = new User("1","Patrick","Wang",2000, hash);
+                } else {
+                    Log.d(TAG, "No such document");
+                }
+            } else {
+                Log.d(TAG, "get failed with ", task.getException());
+            }
+        });
 
-        // Add a new document with a generated ID
-//        fb.createUser(user);
-        User userGet = new User("1");
-        fb.getUser(userGet);
     }
 }
