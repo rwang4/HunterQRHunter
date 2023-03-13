@@ -59,7 +59,7 @@ public class FbRepository {
                 .addOnFailureListener(e -> Log.w(TAG, "Error adding document", e));
     }
     public void updateQRComments(int hashCode, ArrayList<String> comments) {
-        db.collection("QR Creatures").document(Integer.toString(hashCode)).update("Comments", comments).addOnSuccessListener(aVoid -> Log.d(TAG, "DocumentSnapshot successfully written!"))
+        db.collection("QR Creatures").document(Integer.toString(hashCode)).update("Comments", comments).addOnSuccessListener(aVoid -> Log.d(TAG, "QR Creature Comments successfully updated!"))
                 .addOnFailureListener(e -> Log.w(TAG, "Error adding document", e));
     }
     // To utilize the user get from the db, you can pass a callback function as parameter and call the callback function in onComplete
