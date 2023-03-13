@@ -28,8 +28,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class MainActivity extends AppCompatActivity {
 
 
-        private FirebaseFirestore db;
-        private FbRepository fb;
+    private FbRepository fb;
 
         @Override
         protected void onCreate(Bundle savedInstanceState) {
@@ -39,32 +38,35 @@ public class MainActivity extends AppCompatActivity {
             ListView listView = findViewById(R.id.qr_qr_comment_list);
             Button addText = (Button) findViewById(R.id.qr_add_button);
             Button scanned = (Button) findViewById(R.id.qr_scanned_number);
-            Button score = (Button) findViewById(R.id.qr_qr_score) ;
+            Button score = (Button) findViewById(R.id.qr_qr_score);
             EditText editText = (EditText) findViewById(R.id.qr_add_comment);
 
+            Intent intent = getIntent();
+            int hashCode = intent.getIntExtra("HashCode", 0);
 
-            db = FirebaseFirestore.getInstance();
+
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
             fb = new FbRepository(db);
             ArrayList<String> commentList = new ArrayList<>();
-            ArrayAdapter<String> commentAdapter = new ArrayAdapter<String>((Context) this,R.layout.activity_qr_comment, commentList);
+            ArrayAdapter<String> commentAdapter = new ArrayAdapter<String>((Context) this, R.layout.activity_qr_comment, commentList);
             listView.setAdapter(commentAdapter);
 
 
-
-            DocumentReference docRef = db.collection("QR Creatures").document(Integer.toString(300));
+            DocumentReference docRef = db.collection("QR Creatures").document(Integer.toString(hashCode));
             docRef.get().addOnCompleteListener(task -> {
                 if (task.isSuccessful()) {
                     DocumentSnapshot document = task.getResult();
                     if (document.exists()) {
-                        QRCreature qrCreature = new QRCreature(300);
+                        QRCreature qrCreature = new QRCreature(hashCode);
                         // set QR object
                         qrCreature.setHashName((String) document.get("HashName"));
-                        qrCreature.setHashName((String) document.get("HashImage"));
+                        qrCreature.setHashImage((String) document.get("HashImage"));
                         qrCreature.setHashCode(((Long) Objects.requireNonNull(document.get("HashCode"))).intValue());
                         qrCreature.setScore(((Long) Objects.requireNonNull(document.get("Score"))).intValue());
                         qrCreature.setOwnedBy((ArrayList<String>) document.get("OwnedBy"));
                         qrCreature.setComments((ArrayList<String>) document.get("Comments"));
-                        commentList.addAll((ArrayList<String>) document.get("Comments"));
+
+                        commentList.addAll(qrCreature.getComments());
 
                         score.setText(Integer.toString(qrCreature.getScore()));
                         scanned.setText(Integer.toString(qrCreature.getOwnedBy().size()));
@@ -86,18 +88,12 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onClick(View v) {
                     String newComment = editText.getText().toString();
-                    if (!newComment.isEmpty()){
+                    if (!newComment.isEmpty()) {
                         commentList.add(newComment);
                     }
-                    System.out.println(commentList);
                     commentAdapter.notifyDataSetChanged();
-                    fb.updateQRComments(300, commentList);
+                    fb.updateQRComments(hashCode, commentList);
                 }
             });
-
-
-
         }
-
-
     }
