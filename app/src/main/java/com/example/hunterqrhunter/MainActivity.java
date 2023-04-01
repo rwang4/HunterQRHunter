@@ -1,99 +1,115 @@
 package com.example.hunterqrhunter;
 
-import static android.content.ContentValues.TAG;
+import static java.sql.DriverManager.println;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.graphics.Bitmap;
+import android.content.Intent;
+import android.graphics.Picture;
+import android.os.Bundle;
+
+import android.util.DisplayMetrics;
+import android.view.View;
+import android.widget.Button;
+import android.widget.ImageView;
+import android.provider.Settings;
+import android.widget.EditText;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import android.content.Context;
-import android.content.Intent;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.View;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.ListView;
+import com.example.hunterqrhunter.data.FbRepository;
 
 import com.example.hunterqrhunter.data.FbRepository;
-import com.example.hunterqrhunter.model.QRCreature;
-import com.google.firebase.firestore.DocumentReference;
-import com.google.firebase.firestore.DocumentSnapshot;
+
+import com.example.hunterqrhunter.model.HashQR;
+import com.example.hunterqrhunter.page.MenuScreen;
+import com.google.firebase.firestore.CollectionReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
+
+import java.util.HashMap;
+
 
 public class MainActivity extends AppCompatActivity {
 
 
-    private FbRepository fb;
+    String hashVal = "dragonasf";
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+        // Get a reference to the ImageView
+        ImageView imageView = findViewById(R.id.QrCreatureImage);
+        // Generate hash and hash name
+        byte[] hash = HashQR.hashObject(hashVal);
+        String HashName = HashQR.giveQrName(hash);
+//        Bitmap HashImage = hashQR.generateImageFromHashcode(hash);
 
-        @Override
-        protected void onCreate(Bundle savedInstanceState) {
-            super.onCreate(savedInstanceState);
+// Generate the bitmap from the hash code
+//        Bitmap bitmap = Bitmap.createBitmap(HashImage);
 
-            setContentView(R.layout.activity_qr);
-            ListView listView = findViewById(R.id.qr_qr_comment_list);
-            Button addText = (Button) findViewById(R.id.qr_add_button);
-            Button scanned = (Button) findViewById(R.id.qr_scanned_number);
-            Button score = (Button) findViewById(R.id.qr_qr_score);
-            EditText editText = (EditText) findViewById(R.id.qr_add_comment);
+// Set the bitmap on the ImageView
+//        imageView.setImageBitmap(bitmap);
 
-            Intent intent = getIntent();
-            int hashCode = intent.getIntExtra("HashCode", 0);
+        // Initialize Firebase Firestore and FbRepository
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        FbRepository fb = new FbRepository(db);
 
+        // Initialize the button and set an OnClickListener
+        Button mButton = findViewById(R.id.btn1);
+        mButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // Generate hash and hash name
+                byte[] hash = HashQR.hashObject(hashVal);
+                String HashName = HashQR.giveQrName(hash);
 
-            FirebaseFirestore db = FirebaseFirestore.getInstance();
-            fb = new FbRepository(db);
-            ArrayList<String> commentList = new ArrayList<>();
-            ArrayAdapter<String> commentAdapter = new ArrayAdapter<String>((Context) this, R.layout.activity_qr_comment, commentList);
-            listView.setAdapter(commentAdapter);
+                // Create a new user with a first and last name, born year, hash, and hash name
+//                QRCreature qrCreature = new QRCreature(HashName, hash);
+//                fb.writeQR(qrCreature);
+            }
+        });
 
+        // Initializing back end variables for user sign up
+        Button signBtn = (Button) findViewById(R.id.btn_signup);
+        String userID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        EditText username = findViewById((R.id.username_sign_up));
+        EditText email = findViewById((R.id.email_sign_up));
 
-            DocumentReference docRef = db.collection("QR Creatures").document(Integer.toString(hashCode));
-            docRef.get().addOnCompleteListener(task -> {
-                if (task.isSuccessful()) {
-                    DocumentSnapshot document = task.getResult();
-                    if (document.exists()) {
-                        QRCreature qrCreature = new QRCreature(hashCode);
-                        // set QR object
-                        qrCreature.setHashName((String) document.get("HashName"));
-                        qrCreature.setHashImage((String) document.get("HashImage"));
-                        qrCreature.setHashCode(((Long) Objects.requireNonNull(document.get("HashCode"))).intValue());
-                        qrCreature.setScore(((Long) Objects.requireNonNull(document.get("Score"))).intValue());
-                        qrCreature.setOwnedBy((ArrayList<String>) document.get("OwnedBy"));
-                        qrCreature.setComments((ArrayList<String>) document.get("Comments"));
+        // Initializing database collections
+        CollectionReference usersCollection = db.collection("User");
+        CollectionReference usernameCollection = db.collection("Usernames");
+        signBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
 
-                        commentList.addAll(qrCreature.getComments());
+                final String usernameStr = username.getText().toString();
+                final String emailStr = email.getText().toString();
 
-                        score.setText(Integer.toString(qrCreature.getScore()));
-                        scanned.setText(Integer.toString(qrCreature.getOwnedBy().size()));
+                HashMap<String, String> userData = new HashMap<>();
+                HashMap<String, String> usernameData = new HashMap<>();
 
-                        commentAdapter.notifyDataSetChanged();
+                if (usernameStr.length() > 0 && emailStr.length() > 0) {
 
+                    userData.put("username", usernameStr);
+                    userData.put("email", emailStr);
+                    userData.put("uid", userID);
 
-                        // here you can use the callback function to do the work with the get QR.
-                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
+                    usernameData.put("username", usernameStr);
 
-                    } else {
-                        Log.d(TAG, "No such document");
-                    }
-                } else {
-                    Log.d(TAG, "get failed with ", task.getException());
+                    usersCollection.document(userID).set(userData);
+                    usernameCollection.document(usernameStr).set(usernameData);
                 }
-            });
-            addText.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    String newComment = editText.getText().toString();
-                    if (!newComment.isEmpty()) {
-                        commentList.add(newComment);
-                    }
-                    commentAdapter.notifyDataSetChanged();
-                    fb.updateQRComments(hashCode, commentList);
-                }
-            });
-        }
+                openMenuScreen();
+            }
+        });
     }
+    private void openMenuScreen() {
+        Intent intent = new Intent(getApplicationContext(), MenuScreen.class);
+        startActivity(intent);
+    }
+
+
+}

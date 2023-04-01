@@ -1,0 +1,145 @@
+Index: app/src/main/java/com/example/hunterqrhunter/MainActivity.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.BaseRevisionTextPatchEP
+<+>package com.example.hunterqrhunter;\n\nimport static android.content.ContentValues.TAG;\n\nimport androidx.annotation.NonNull;\nimport androidx.appcompat.app.AppCompatActivity;\n\nimport android.os.Bundle;\nimport android.util.Log;\n\nimport com.google.android.gms.tasks.OnFailureListener;\nimport com.google.android.gms.tasks.OnSuccessListener;\nimport com.google.firebase.firestore.DocumentReference;\nimport com.google.firebase.firestore.FirebaseFirestore;\n\nimport java.util.HashMap;\nimport java.util.Map;\n\npublic class MainActivity extends AppCompatActivity {\n    Object hashVal = \"yongbin@gmail.com\";\n    HashQR hashQR = new HashQR();\n    @Override\n    protected void onCreate(Bundle savedInstanceState) {\n        super.onCreate(savedInstanceState);\n        setContentView(R.layout.activity_main);\n\n        Object hash = hashQR.hashObject(hashVal);\n\n        FirebaseFirestore db = FirebaseFirestore.getInstance();\n\n        // Create a new user with a first and last name\n        Map<String, Object> user = new HashMap<>();\n        user.put(\"first\", \"Ada\");\n        user.put(\"last\", \"Lovelace\");\n        user.put(\"born\", 1815);\n        user.put(\"Hash?\", hash);\n\n        // Add a new document with a generated ID\n        db.collection(\"users\")\n                .add(user)\n                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {\n                    @Override\n                    public void onSuccess(DocumentReference documentReference) {\n                        Log.d(TAG, \"DocumentSnapshot added with ID: \" + documentReference.getId());\n                    }\n                })\n                .addOnFailureListener(new OnFailureListener() {\n                    @Override\n                    public void onFailure(@NonNull Exception e) {\n                        Log.w(TAG, \"Error adding document\", e);\n                    }\n                });\n    }\n}
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/app/src/main/java/com/example/hunterqrhunter/MainActivity.java b/app/src/main/java/com/example/hunterqrhunter/MainActivity.java
+--- a/app/src/main/java/com/example/hunterqrhunter/MainActivity.java	(revision 1aef2dd4da849163b5830da2bb7e6432084d450e)
++++ b/app/src/main/java/com/example/hunterqrhunter/MainActivity.java	(date 1680317706984)
+@@ -2,53 +2,99 @@
+ 
+ import static android.content.ContentValues.TAG;
+ 
+-import androidx.annotation.NonNull;
+ import androidx.appcompat.app.AppCompatActivity;
+ 
++import android.content.Context;
++import android.content.Intent;
+ import android.os.Bundle;
+ import android.util.Log;
++import android.view.View;
++import android.widget.ArrayAdapter;
++import android.widget.Button;
++import android.widget.EditText;
++import android.widget.ListView;
+ 
+-import com.google.android.gms.tasks.OnFailureListener;
+-import com.google.android.gms.tasks.OnSuccessListener;
++import com.example.hunterqrhunter.data.FbRepository;
++import com.example.hunterqrhunter.model.QRCreature;
+ import com.google.firebase.firestore.DocumentReference;
++import com.google.firebase.firestore.DocumentSnapshot;
+ import com.google.firebase.firestore.FirebaseFirestore;
+ 
+-import java.util.HashMap;
+-import java.util.Map;
++import java.util.ArrayList;
++import java.util.Arrays;
++import java.util.Objects;
++import java.util.concurrent.atomic.AtomicReference;
+ 
+ public class MainActivity extends AppCompatActivity {
+-    Object hashVal = "yongbin@gmail.com";
+-    HashQR hashQR = new HashQR();
+-    @Override
+-    protected void onCreate(Bundle savedInstanceState) {
+-        super.onCreate(savedInstanceState);
+-        setContentView(R.layout.activity_main);
++
++
++    public static final int ACTIVITY_QR = R.layout.activity_qr;
++    private FbRepository fb;
++
++        @Override
++        protected void onCreate(Bundle savedInstanceState) {
++            super.onCreate(savedInstanceState);
++
++            setContentView(ACTIVITY_QR);
++            ListView listView = findViewById(R.id.qr_qr_comment_list);
++            Button addText = (Button) findViewById(R.id.qr_add_button);
++            Button scanned = (Button) findViewById(R.id.qr_scanned_number);
++            Button score = (Button) findViewById(R.id.qr_qr_score);
++            EditText editText = (EditText) findViewById(R.id.qr_add_comment);
+ 
+-        Object hash = hashQR.hashObject(hashVal);
++            Intent intent = getIntent();
++            int hashCode = intent.getIntExtra("HashCode", 0);
++
+ 
+-        FirebaseFirestore db = FirebaseFirestore.getInstance();
++            FirebaseFirestore db = FirebaseFirestore.getInstance();
++            fb = new FbRepository(db);
++            ArrayList<String> commentList = new ArrayList<>();
++            ArrayAdapter<String> commentAdapter = new ArrayAdapter<String>((Context) this, R.layout.activity_qr_comment, commentList);
++            listView.setAdapter(commentAdapter);
++
++
++            DocumentReference docRef = db.collection("QR Creatures").document(Integer.toString(hashCode));
++            docRef.get().addOnCompleteListener(task -> {
++                if (task.isSuccessful()) {
++                    DocumentSnapshot document = task.getResult();
++                    if (document.exists()) {
++                        QRCreature qrCreature = new QRCreature(hashCode);
++                        // set QR object
++                        qrCreature.setHashName((String) document.get("HashName"));
++                        qrCreature.setHashImage((String) document.get("HashImage"));
++                        qrCreature.setHashCode(((Long) Objects.requireNonNull(document.get("HashCode"))).intValue());
++                        qrCreature.setScore(((Long) Objects.requireNonNull(document.get("Score"))).intValue());
++                        qrCreature.setOwnedBy((ArrayList<String>) document.get("OwnedBy"));
++                        qrCreature.setComments((ArrayList<String>) document.get("Comments"));
++
++                        commentList.addAll(qrCreature.getComments());
++
++                        score.setText(Integer.toString(qrCreature.getScore()));
++                        scanned.setText(Integer.toString(qrCreature.getOwnedBy().size()));
+ 
+-        // Create a new user with a first and last name
+-        Map<String, Object> user = new HashMap<>();
+-        user.put("first", "Ada");
+-        user.put("last", "Lovelace");
+-        user.put("born", 1815);
+-        user.put("Hash?", hash);
++                        commentAdapter.notifyDataSetChanged();
+ 
+-        // Add a new document with a generated ID
+-        db.collection("users")
+-                .add(user)
+-                .addOnSuccessListener(new OnSuccessListener<DocumentReference>() {
+-                    @Override
+-                    public void onSuccess(DocumentReference documentReference) {
+-                        Log.d(TAG, "DocumentSnapshot added with ID: " + documentReference.getId());
++
++                        // here you can use the callback function to do the work with the get QR.
++                        Log.d(TAG, "DocumentSnapshot data: " + document.getData());
++
++                    } else {
++                        Log.d(TAG, "No such document");
++                    }
++                } else {
++                    Log.d(TAG, "get failed with ", task.getException());
++                }
++            });
++            addText.setOnClickListener(new View.OnClickListener() {
++                @Override
++                public void onClick(View v) {
++                    String newComment = editText.getText().toString();
++                    if (!newComment.isEmpty()) {
++                        commentList.add(newComment);
+                     }
+-                })
+-                .addOnFailureListener(new OnFailureListener() {
+-                    @Override
+-                    public void onFailure(@NonNull Exception e) {
+-                        Log.w(TAG, "Error adding document", e);
+-                    }
+-                });
++                    commentAdapter.notifyDataSetChanged();
++                    fb.updateQRComments(hashCode, commentList);
++                }
++            });
++        }
+     }
+-}
+\ No newline at end of file
